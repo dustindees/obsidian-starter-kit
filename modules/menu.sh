@@ -16,9 +16,11 @@ show_installation_menu() {
     moc_enabled=false
     journaling_enabled=false
     calendar_enabled=false
+    entertainment_enabled=false
     routine_categories=()
     moc_categories=()
     calendar_categories=()
+    entertainment_categories=()
     
     check_fzf
     get_vault_name
@@ -38,6 +40,11 @@ show_installation_menu() {
     ask_calendar_integration
     if [[ "$calendar_enabled" == "true" ]]; then
         get_calendar_categories
+    fi
+    
+    ask_entertainment_integration
+    if [[ "$entertainment_enabled" == "true" ]]; then
+        get_entertainment_categories
     fi
 }
 
@@ -219,5 +226,60 @@ get_calendar_categories() {
         print_success "Selected calendar categories: ${calendar_categories[*]}"
     else
         print_warning "No calendar categories selected"
+    fi
+}
+
+# Ask about entertainment integration
+ask_entertainment_integration() {
+    echo
+    print_status "Do you want to integrate entertainment functionality?"
+    
+    choice=$(echo -e "Yes\nNo" | fzf --prompt="Entertainment integration: " --height=5)
+    
+    if [[ "$choice" == "Yes" ]]; then
+        entertainment_enabled=true
+        print_success "Entertainment integration enabled"
+    else
+        entertainment_enabled=false
+        print_success "Entertainment integration disabled"
+    fi
+}
+
+# Get entertainment categories from user
+get_entertainment_categories() {
+    echo
+    print_status "Select your preferred entertainment categories:"
+    
+    local default_categories=("TV shows" "Movies" "Video games" "Anime" "Podcasts" "Books" "Boardgames")
+    local selected_categories=()
+    
+    # Multi-select from defaults
+    print_status "Select from default categories (use TAB to select multiple):"
+    local selected_defaults
+    selected_defaults=$(printf '%s\n' "${default_categories[@]}" | fzf --multi --prompt="Select categories: " --height=10)
+    
+    if [[ -n "$selected_defaults" ]]; then
+        while IFS= read -r category; do
+            selected_categories+=("$category")
+        done <<< "$selected_defaults"
+    fi
+    
+    # Ask for custom categories
+    echo
+    print_status "Enter any custom entertainment categories (one per line, empty line to finish):"
+    while true; do
+        read -p "> " custom_category
+        if [[ -z "$custom_category" ]]; then
+            break
+        fi
+        selected_categories+=("$custom_category")
+    done
+    
+    entertainment_categories=("${selected_categories[@]}")
+    
+    if [[ ${#entertainment_categories[@]} -gt 0 ]]; then
+        print_success "Selected entertainment categories: ${entertainment_categories[*]}"
+    else
+        print_warning "No entertainment categories selected"
     fi
 }
