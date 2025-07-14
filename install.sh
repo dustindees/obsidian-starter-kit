@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-# Obsidian Starter Kit Installer - Main Script
-# Creates a new Obsidian vault with custom directory structure using modular components
+# Obsidian Starter Kit Installer
 
 set -e
 
@@ -16,12 +15,10 @@ source "$SCRIPT_DIR/modules/moc.sh"
 source "$SCRIPT_DIR/modules/journaling.sh"
 source "$SCRIPT_DIR/modules/calendar.sh"
 
-# Main installation function
+
 main() {
-    # Show menu and get user choices
+    # Base vault and menu
     show_installation_menu
-    
-    # Create base directory structure
     create_base_directories "$vault_name"
     
     # Setup modules based on user choices
