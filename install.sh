@@ -133,6 +133,65 @@ get_routine_categories() {
     fi
 }
 
+# Ask about MOC integration
+ask_moc_integration() {
+    echo
+    print_status "Do you want to integrate MOC (Maps of Content) functionality?"
+    
+    choice=$(echo -e "Yes\nNo" | fzf --prompt="MOC integration: " --height=5)
+    
+    if [[ "$choice" == "Yes" ]]; then
+        moc_enabled=true
+        print_success "MOC integration enabled"
+    else
+        moc_enabled=false
+        print_success "MOC integration disabled"
+    fi
+}
+
+# Get MOC categories from user
+get_moc_categories() {
+    if [[ "$moc_enabled" != "true" ]]; then
+        return
+    fi
+    
+    echo
+    print_status "Select your preferred MOC (Maps of Content) categories:"
+    
+    local default_categories=("Profession" "Personal Finance" "Health & Fitness" "History" "Language" "Science")
+    local selected_categories=()
+    
+    # Multi-select from defaults
+    print_status "Select from default categories (use TAB to select multiple):"
+    local selected_defaults
+    selected_defaults=$(printf '%s\n' "${default_categories[@]}" | fzf --multi --prompt="Select MOC categories: " --height=10)
+    
+    if [[ -n "$selected_defaults" ]]; then
+        while IFS= read -r category; do
+            selected_categories+=("$category")
+        done <<< "$selected_defaults"
+    fi
+    
+    # Ask for custom categories
+    echo
+    print_status "Enter any custom MOC categories (one per line, empty line to finish):"
+    while true; do
+        read -p "> " custom_category
+        if [[ -z "$custom_category" ]]; then
+            break
+        fi
+        selected_categories+=("$custom_category")
+    done
+    
+    moc_categories=("${selected_categories[@]}")
+    
+    if [[ ${#moc_categories[@]} -gt 0 ]]; then
+        print_success "Selected MOC categories: ${moc_categories[*]}"
+    else
+        print_warning "No MOC categories selected"
+    fi
+}
+
 # Ask about calendar integration
 ask_calendar_integration() {
     echo
@@ -270,6 +329,24 @@ create_automation_files() {
     done
 }
 
+# Create MOC files
+create_moc_files() {
+    if [[ "$moc_enabled" != "true" ]]; then
+        return
+    fi
+    
+    local permanent_dir="$vault_name/300_Permanent"
+    
+    print_status "Creating MOC files..."
+    
+    for category in "${moc_categories[@]}"; do
+        local filename=$(echo "$category" | sed 's/[[:space:]]/_/g')
+        local filepath="$permanent_dir/0-${filename}.md"
+        touch "$filepath"
+        print_success "Created: $filepath"
+    done
+}
+
 # Create calendar category subdirectories
 create_calendar_categories() {
     if [[ "$calendar_enabled" != "true" ]]; then
@@ -296,19 +373,24 @@ main() {
     
     # Global variables
     daily_notes_enabled=false
+    moc_enabled=false
     calendar_enabled=false
     routine_categories=()
+    moc_categories=()
     calendar_categories=()
     
     check_fzf
     get_vault_name
     ask_daily_notes
     get_routine_categories
+    ask_moc_integration
+    get_moc_categories
     ask_calendar_integration
     get_calendar_categories
     create_directories "$vault_name"
     create_scripts_directory
     create_automation_files
+    create_moc_files
     create_calendar_categories
     
     echo
@@ -321,6 +403,11 @@ main() {
         echo
         print_status "Daily notes integration enabled with automation files created."
         print_status "Scripts directory: ${vault_name}_scripts"
+    fi
+    
+    if [[ "$moc_enabled" == "true" ]]; then
+        echo
+        print_status "MOC integration enabled with category files created."
     fi
     
     if [[ "$calendar_enabled" == "true" ]]; then
