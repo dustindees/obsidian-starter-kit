@@ -17,6 +17,11 @@ show_installation_menu() {
     journaling_enabled=false
     calendar_enabled=false
     entertainment_enabled=false
+    backup_enabled=false
+    local_backup_enabled=false
+    remote_backup_enabled=false
+    local_backup_dir=""
+    git_repo_url=""
     routine_categories=()
     moc_categories=()
     calendar_categories=()
@@ -46,6 +51,8 @@ show_installation_menu() {
     if [[ "$entertainment_enabled" == "true" ]]; then
         get_entertainment_categories
     fi
+    
+    ask_backup_integration
 }
 
 # Ask about daily notes integration
@@ -282,4 +289,101 @@ get_entertainment_categories() {
     else
         print_warning "No entertainment categories selected"
     fi
+}
+
+# Ask about backup integration
+ask_backup_integration() {
+    echo
+    print_status "Do you want to set up automatic backups for your vault?"
+    
+    choice=$(echo -e "Yes\nNo" | fzf --prompt="Backup integration: " --height=5)
+    
+    if [[ "$choice" == "Yes" ]]; then
+        backup_enabled=true
+        print_success "Backup integration enabled"
+        get_backup_options
+    else
+        backup_enabled=false
+        print_success "Backup integration disabled"
+    fi
+}
+
+# Get backup options from user
+get_backup_options() {
+    echo
+    print_status "Select your backup options (use TAB to select multiple):"
+    
+    local backup_options=("Local backup" "Remote backup (Git)")
+    local selected_options
+    selected_options=$(printf '%s\n' "${backup_options[@]}" | fzf --multi --prompt="Select backup types: " --height=10)
+    
+    # Initialize backup type variables
+    local_backup_enabled=false
+    remote_backup_enabled=false
+    
+    if [[ -n "$selected_options" ]]; then
+        while IFS= read -r option; do
+            case "$option" in
+                "Local backup")
+                    local_backup_enabled=true
+                    ;;
+                "Remote backup (Git)")
+                    remote_backup_enabled=true
+                    ;;
+            esac
+        done <<< "$selected_options"
+    fi
+    
+    # Get additional configuration if needed
+    if [[ "$local_backup_enabled" == "true" ]]; then
+        get_local_backup_config
+    fi
+    
+    if [[ "$remote_backup_enabled" == "true" ]]; then
+        get_remote_backup_config
+    fi
+}
+
+# Get local backup configuration
+get_local_backup_config() {
+    echo
+    print_status "Configuring local backup..."
+    
+    # Get backup directory
+    print_status "Enter the directory where local backups should be stored:"
+    print_status "(Default: ~/obsidian-backups)"
+    read -p "> " local_backup_dir
+    
+    if [[ -z "$local_backup_dir" ]]; then
+        local_backup_dir="$HOME/obsidian-backups"
+    fi
+    
+    # Expand ~ to full path
+    local_backup_dir="${local_backup_dir/#\~/$HOME}"
+    
+    print_success "Local backup directory set to: $local_backup_dir"
+}
+
+# Get remote backup configuration
+get_remote_backup_config() {
+    echo
+    print_status "Configuring remote backup (Git)..."
+    
+    # Get git repository URL
+    print_status "Enter the Git repository URL for remote backups:"
+    print_status "(e.g., https://github.com/username/my-obsidian-vault.git)"
+    read -p "> " git_repo_url
+    
+    if [[ -z "$git_repo_url" ]]; then
+        print_error "Git repository URL cannot be empty for remote backup."
+        get_remote_backup_config
+        return
+    fi
+    
+    print_success "Git repository URL set to: $git_repo_url"
+    
+    # Ask about git credentials
+    echo
+    print_status "Git authentication will be handled by your system's git configuration."
+    print_status "Make sure you have proper SSH keys or credential helper configured."
 }

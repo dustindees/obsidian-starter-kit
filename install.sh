@@ -15,6 +15,7 @@ source "$SCRIPT_DIR/modules/moc.sh"
 source "$SCRIPT_DIR/modules/journaling.sh"
 source "$SCRIPT_DIR/modules/calendar.sh"
 source "$SCRIPT_DIR/modules/entertainment.sh"
+source "$SCRIPT_DIR/modules/backup.sh"
 
 
 main() {
@@ -28,6 +29,7 @@ main() {
     setup_journaling "$vault_name"
     setup_calendar "$vault_name"
     setup_entertainment "$vault_name"
+    setup_backup "$vault_name"
     
     # Show completion summary
     echo
@@ -42,6 +44,7 @@ main() {
     show_journaling_summary
     show_calendar_summary
     show_entertainment_summary
+    show_backup_summary
     
     echo
     print_status "You can now open this vault in Obsidian by selecting the '$vault_name' folder."
