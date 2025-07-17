@@ -34,6 +34,9 @@ show_installation_menu() {
     ask_daily_notes
     if [[ "$daily_notes_enabled" == "true" ]]; then
         get_routine_categories
+        # Source daily_notes.sh to access get_routine_content function
+        source "$(dirname "${BASH_SOURCE[0]}")/daily_notes.sh"
+        get_routine_content
     fi
     
     ask_moc_integration

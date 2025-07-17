@@ -31,6 +31,98 @@ create_scripts_directory() {
     print_success "Created: $scripts_dir"
 }
 
+# Get routine content from user for each selected category
+get_routine_content() {
+    if [[ ${#routine_categories[@]} -eq 0 ]]; then
+        return
+    fi
+    
+    echo
+    print_status "Now let's fill in your daily routines..."
+    print_status "For each routine category, you can add:"
+    print_status "  1) Checkbox items (queriable): '- [ ] Water'"
+    print_status "  2) Colon-delineated fields (queriable): 'Pushups: 80'"
+    print_status "  3) Any other content you want"
+    echo
+    
+    # Initialize associative array for routine contents
+    declare -gA routine_contents
+    
+    for category in "${routine_categories[@]}"; do
+        echo
+        print_status "Setting up routines for: $category"
+        
+        local content=""
+        
+        # Get checkbox items
+        echo
+        print_status "Checkbox items for $category:"
+        print_status "Enter checkbox field names (press Enter on empty line to finish):"
+        while true; do
+            read -p "Checkbox field: " checkbox_field
+            if [[ -z "$checkbox_field" ]]; then
+                break
+            fi
+            
+            # Add newline if content already exists
+            if [[ -n "$content" ]]; then
+                content="$content\n"
+            fi
+            
+            content="$content- [ ] $checkbox_field"
+        done
+        
+        # Get colon-delineated fields
+        echo
+        print_status "Colon-delineated fields for $category:"
+        print_status "Enter field names (press Enter on empty line to finish):"
+        while true; do
+            read -p "Field name: " field_name
+            if [[ -z "$field_name" ]]; then
+                break
+            fi
+            
+            read -p "Default value (optional): " field_value
+            
+            # Add newline if content already exists
+            if [[ -n "$content" ]]; then
+                content="$content\n"
+            fi
+            
+            if [[ -n "$field_value" ]]; then
+                content="$content$field_name: $field_value"
+            else
+                content="$content$field_name: "
+            fi
+        done
+        
+        # Get any other content
+        echo
+        print_status "Any other content for $category:"
+        print_status "Enter additional items (press Enter on empty line to finish):"
+        while true; do
+            read -p "Additional item: " additional_item
+            if [[ -z "$additional_item" ]]; then
+                break
+            fi
+            
+            # Add newline if content already exists
+            if [[ -n "$content" ]]; then
+                content="$content\n"
+            fi
+            
+            content="$content$additional_item"
+        done
+        
+        if [[ -n "$content" ]]; then
+            routine_contents["$category"]="$content"
+            print_success "Added content for $category"
+        else
+            print_warning "No content added for $category"
+        fi
+    done
+}
+
 # Create automation files for building daily notes
 create_automation_files() {
     local vault_path="$1"
@@ -42,7 +134,13 @@ create_automation_files() {
     for category in "${routine_categories[@]}"; do
         local filename=$(echo "$category" | sed 's/[[:space:]]/_/g')
         local filepath="$automation_dir/${filename}_Daily.md"
-        touch "$filepath"
+        
+        # Create file with routine content if available
+        if [[ -n "${routine_contents[$category]}" ]]; then
+            echo -e "${routine_contents[$category]}" > "$filepath"
+        else
+            touch "$filepath"
+        fi
         print_success "Created: $filepath"
     done
     
