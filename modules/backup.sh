@@ -47,13 +47,29 @@ get_backup_options() {
         done <<< "$selected_options"
     fi
     
-    # Get additional configuration if needed
+    # Check dependencies and get additional configuration if needed
     if [[ "$local_backup_enabled" == "true" ]]; then
-        get_local_backup_config
+        if check_crontab; then
+            get_local_backup_config
+        else
+            print_error "Local backup requires crontab. Disabling local backup."
+            local_backup_enabled=false
+        fi
     fi
     
     if [[ "$remote_backup_enabled" == "true" ]]; then
-        get_remote_backup_config
+        if check_git; then
+            get_remote_backup_config
+        else
+            print_error "Remote backup requires git. Disabling remote backup."
+            remote_backup_enabled=false
+        fi
+    fi
+    
+    # Check if any backup options are still enabled
+    if [[ "$local_backup_enabled" == "false" && "$remote_backup_enabled" == "false" ]]; then
+        print_warning "No backup options available. Disabling backup functionality."
+        backup_enabled=false
     fi
 }
 
@@ -214,6 +230,12 @@ setup_local_backup_cron() {
     local scripts_dir="$2"
     local script_path="$scripts_dir/local-backup.sh"
     
+    # Verify crontab is still available
+    if ! check_crontab; then
+        print_error "Cannot set up cron job for local backup"
+        return 1
+    fi
+    
     # Add cron job to run daily at 2 AM
     local cron_entry="0 2 * * * $script_path"
     
@@ -221,8 +243,12 @@ setup_local_backup_cron() {
     if crontab -l 2>/dev/null | grep -F "$script_path" >/dev/null; then
         print_warning "Local backup cron job already exists"
     else
-        (crontab -l 2>/dev/null; echo "$cron_entry") | crontab -
-        print_success "Added local backup cron job (daily at 2:00 AM)"
+        if (crontab -l 2>/dev/null; echo "$cron_entry") | crontab - 2>/dev/null; then
+            print_success "Added local backup cron job (daily at 2:00 AM)"
+        else
+            print_error "Failed to add local backup cron job"
+            return 1
+        fi
     fi
 }
 
@@ -232,6 +258,12 @@ setup_remote_backup_cron() {
     local scripts_dir="$2"
     local script_path="$scripts_dir/remote-backup.sh"
     
+    # Verify crontab is still available
+    if ! check_crontab; then
+        print_error "Cannot set up cron job for remote backup"
+        return 1
+    fi
+    
     # Add cron job to run daily at 3 AM
     local cron_entry="0 3 * * * $script_path"
     
@@ -239,8 +271,12 @@ setup_remote_backup_cron() {
     if crontab -l 2>/dev/null | grep -F "$script_path" >/dev/null; then
         print_warning "Remote backup cron job already exists"
     else
-        (crontab -l 2>/dev/null; echo "$cron_entry") | crontab -
-        print_success "Added remote backup cron job (daily at 3:00 AM)"
+        if (crontab -l 2>/dev/null; echo "$cron_entry") | crontab - 2>/dev/null; then
+            print_success "Added remote backup cron job (daily at 3:00 AM)"
+        else
+            print_error "Failed to add remote backup cron job"
+            return 1
+        fi
     fi
 }
 

@@ -19,6 +19,9 @@ source "$SCRIPT_DIR/modules/backup.sh"
 
 
 main() {
+    # Check core dependencies
+    check_core_dependencies
+    
     # Base vault and menu
     show_installation_menu
     create_base_directories "$vault_name"
