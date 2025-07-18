@@ -23,6 +23,7 @@ show_installation_menu() {
     local_backup_dir=""
     git_repo_url=""
     routine_categories=()
+    recurring_routine_frequencies=()
     moc_categories=()
     calendar_categories=()
     entertainment_categories=()
@@ -37,6 +38,8 @@ show_installation_menu() {
         # Source daily_notes.sh to access get_routine_content function
         source "$(dirname "${BASH_SOURCE[0]}")/daily_notes.sh"
         get_routine_content
+        get_recurring_routine_frequencies
+        get_recurring_routine_content
     fi
     
     ask_moc_integration
@@ -110,6 +113,34 @@ get_routine_categories() {
         print_success "Selected routine categories: ${routine_categories[*]}"
     else
         print_warning "No routine categories selected"
+    fi
+}
+
+# Get recurring routine frequencies from user
+get_recurring_routine_frequencies() {
+    echo
+    print_status "Select recurring routine frequencies you want to set up:"
+    
+    local default_frequencies=("Weekly" "Monthly" "Quarterly" "Biannually" "Annually")
+    local selected_frequencies=()
+    
+    # Multi-select from defaults
+    print_status "Select from available frequencies (use TAB to select multiple):"
+    local selected_defaults
+    selected_defaults=$(printf '%s\n' "${default_frequencies[@]}" | fzf --multi --prompt="Select frequencies: " --height=10)
+    
+    if [[ -n "$selected_defaults" ]]; then
+        while IFS= read -r frequency; do
+            selected_frequencies+=("$frequency")
+        done <<< "$selected_defaults"
+    fi
+    
+    recurring_routine_frequencies=("${selected_frequencies[@]}")
+    
+    if [[ ${#recurring_routine_frequencies[@]} -gt 0 ]]; then
+        print_success "Selected recurring routine frequencies: ${recurring_routine_frequencies[*]}"
+    else
+        print_warning "No recurring routine frequencies selected"
     fi
 }
 

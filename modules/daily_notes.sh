@@ -123,6 +123,98 @@ get_routine_content() {
     done
 }
 
+# Get recurring routine content from user for each selected frequency
+get_recurring_routine_content() {
+    if [[ ${#recurring_routine_frequencies[@]} -eq 0 ]]; then
+        return
+    fi
+    
+    echo
+    print_status "Now let's fill in your recurring routines..."
+    print_status "For each frequency, you can add:"
+    print_status "  1) Checkbox items (queriable): '- [ ] Review monthly goals'"
+    print_status "  2) Colon-delineated fields (queriable): 'Budget Review: Complete'"
+    print_status "  3) Any other content you want"
+    echo
+    
+    # Initialize associative array for recurring routine contents
+    declare -gA recurring_routine_contents
+    
+    for frequency in "${recurring_routine_frequencies[@]}"; do
+        echo
+        print_status "Setting up $frequency recurring routines:"
+        
+        local content=""
+        
+        # Get checkbox items
+        echo
+        print_status "Checkbox items for $frequency routines:"
+        print_status "Enter checkbox field names (press Enter on empty line to finish):"
+        while true; do
+            read -p "Checkbox field: " checkbox_field
+            if [[ -z "$checkbox_field" ]]; then
+                break
+            fi
+            
+            # Add newline if content already exists
+            if [[ -n "$content" ]]; then
+                content="$content\n"
+            fi
+            
+            content="$content- [ ] $checkbox_field"
+        done
+        
+        # Get colon-delineated fields
+        echo
+        print_status "Colon-delineated fields for $frequency routines:"
+        print_status "Enter field names (press Enter on empty line to finish):"
+        while true; do
+            read -p "Field name: " field_name
+            if [[ -z "$field_name" ]]; then
+                break
+            fi
+            
+            read -p "Default value (optional): " field_value
+            
+            # Add newline if content already exists
+            if [[ -n "$content" ]]; then
+                content="$content\n"
+            fi
+            
+            if [[ -n "$field_value" ]]; then
+                content="$content$field_name: $field_value"
+            else
+                content="$content$field_name: "
+            fi
+        done
+        
+        # Get any other content
+        echo
+        print_status "Any other content for $frequency routines:"
+        print_status "Enter additional items (press Enter on empty line to finish):"
+        while true; do
+            read -p "Additional item: " additional_item
+            if [[ -z "$additional_item" ]]; then
+                break
+            fi
+            
+            # Add newline if content already exists
+            if [[ -n "$content" ]]; then
+                content="$content\n"
+            fi
+            
+            content="$content$additional_item"
+        done
+        
+        if [[ -n "$content" ]]; then
+            recurring_routine_contents["$frequency"]="$content"
+            print_success "Added content for $frequency routines"
+        else
+            print_warning "No content added for $frequency routines"
+        fi
+    done
+}
+
 # Create automation files for building daily notes
 create_automation_files() {
     local vault_path="$1"
@@ -144,15 +236,40 @@ create_automation_files() {
         print_success "Created: $filepath"
     done
     
-    # Create default automation files
+    # Create recurring routine files for selected frequencies
+    for frequency in "${recurring_routine_frequencies[@]}"; do
+        local filename="Recurring_Tasks_${frequency}.md"
+        local filepath="$automation_dir/$filename"
+        
+        # Create file with recurring routine content if available
+        if [[ -n "${recurring_routine_contents[$frequency]}" ]]; then
+            echo -e "${recurring_routine_contents[$frequency]}" > "$filepath"
+        else
+            touch "$filepath"
+        fi
+        print_success "Created: $filepath"
+    done
+    
+    # Create default automation files if not already created by recurring routines
     local default_files=(
         "Inbox_Weekly.md"
-        "Recurring_Tasks_Weekly.md"
-        "Recurring_Tasks_Monthly.md"
-        "Recurring_Tasks_Quarterly.md"
-        "Recurring_Tasks_Biannually.md"
-        "Recurring_Tasks_Annually.md"
     )
+    
+    # Add default files for frequencies not selected by user
+    local all_frequencies=("Weekly" "Monthly" "Quarterly" "Biannually" "Annually")
+    for freq in "${all_frequencies[@]}"; do
+        local freq_selected=false
+        for selected_freq in "${recurring_routine_frequencies[@]}"; do
+            if [[ "$freq" == "$selected_freq" ]]; then
+                freq_selected=true
+                break
+            fi
+        done
+        
+        if [[ "$freq_selected" == "false" ]]; then
+            default_files+=("Recurring_Tasks_${freq}.md")
+        fi
+    done
     
     for file in "${default_files[@]}"; do
         local filepath="$automation_dir/$file"
@@ -170,4 +287,9 @@ show_daily_notes_summary() {
     echo
     print_status "Daily notes integration enabled with automation files created."
     print_status "Scripts directory: ${vault_name}_scripts"
+    
+    if [[ ${#recurring_routine_frequencies[@]} -gt 0 ]]; then
+        echo
+        print_status "Recurring routines configured for: ${recurring_routine_frequencies[*]}"
+    fi
 }
