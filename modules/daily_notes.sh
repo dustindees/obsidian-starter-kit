@@ -228,10 +228,11 @@ create_automation_files() {
         local filepath="$automation_dir/${filename}_Daily.md"
         
         # Create file with routine content if available
+        local header="# $category"
         if [[ -n "${routine_contents[$category]}" ]]; then
-            echo -e "${routine_contents[$category]}" > "$filepath"
+            echo -e "$header\n\n${routine_contents[$category]}" > "$filepath"
         else
-            touch "$filepath"
+            echo "$header" > "$filepath"
         fi
         print_success "Created: $filepath"
     done
@@ -242,10 +243,11 @@ create_automation_files() {
         local filepath="$automation_dir/$filename"
         
         # Create file with recurring routine content if available
+        local header="# Recurring Tasks $frequency"
         if [[ -n "${recurring_routine_contents[$frequency]}" ]]; then
-            echo -e "${recurring_routine_contents[$frequency]}" > "$filepath"
+            echo -e "$header\n\n${recurring_routine_contents[$frequency]}" > "$filepath"
         else
-            touch "$filepath"
+            echo "$header" > "$filepath"
         fi
         print_success "Created: $filepath"
     done
@@ -273,7 +275,21 @@ create_automation_files() {
     
     for file in "${default_files[@]}"; do
         local filepath="$automation_dir/$file"
-        touch "$filepath"
+        
+        # Determine appropriate header based on filename
+        local header=""
+        if [[ "$file" == "Inbox_Weekly.md" ]]; then
+            header="# Inbox"
+        elif [[ "$file" =~ ^Recurring_Tasks_(.+)\.md$ ]]; then
+            local freq="${BASH_REMATCH[1]}"
+            header="# Recurring Tasks $freq"
+        fi
+        
+        if [[ -n "$header" ]]; then
+            echo "$header" > "$filepath"
+        else
+            touch "$filepath"
+        fi
         print_success "Created: $filepath"
     done
 }
