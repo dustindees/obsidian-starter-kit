@@ -3,6 +3,7 @@
 # Daily notes module for Obsidian Starter Kit installer
 
 source "$(dirname "${BASH_SOURCE[0]}")/utils.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/script_builder.sh"
 
 # Setup daily notes functionality
 setup_daily_notes() {
@@ -20,6 +21,7 @@ setup_daily_notes() {
     
     create_scripts_directory
     create_automation_files "$vault_path"
+    setup_script_builder "$vault_path"
 }
 
 # Create external scripts directory
@@ -308,4 +310,6 @@ show_daily_notes_summary() {
         echo
         print_status "Recurring routines configured for: ${recurring_routine_frequencies[*]}"
     fi
+    
+    show_script_builder_summary
 }
