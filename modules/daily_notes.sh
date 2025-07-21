@@ -21,6 +21,8 @@ setup_daily_notes() {
     
     create_scripts_directory
     create_automation_files "$vault_path"
+    
+    # Create the automation script after all templates are set up
     setup_script_builder "$vault_path"
 }
 

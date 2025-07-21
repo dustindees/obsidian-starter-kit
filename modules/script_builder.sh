@@ -5,20 +5,19 @@
 
 source "$(dirname "${BASH_SOURCE[0]}")/utils.sh"
 
-# Setup automation script builder
+# Setup automation script builder (called from daily_notes.sh after all setup)
 setup_script_builder() {
     if [[ "$daily_notes_enabled" != "true" ]]; then
         return
     fi
     
-    print_status "Setting up daily automation script builder..."
+    print_status "Creating daily automation script..."
     
     local vault_path="$1"
-    get_routine_order
     create_daily_automation_script "$vault_path"
 }
 
-# Get user's preferred routine order
+# Get user's preferred routine order (called from menu.sh)
 get_routine_order() {
     if [[ ${#routine_categories[@]} -eq 0 ]]; then
         print_warning "No routine categories found. Skipping routine ordering."
@@ -57,7 +56,8 @@ get_routine_order() {
         fi
         
         local prompt="Select routine #$((${#ordered_routines[@]} + 1)) (${remaining_count} remaining):"
-        local selected_routine=$(printf '%s\n' "${available_routines[@]}" | fzf --prompt="$prompt " --height=10)
+        local selected_routine
+        selected_routine=$(printf '%s\n' "${available_routines[@]}" | fzf --prompt="$prompt " --height=10)
         
         if [[ -n "$selected_routine" ]]; then
             ordered_routines+=("$selected_routine")
@@ -145,7 +145,8 @@ EOF
         echo "# Add routine sections in user-specified order" >> "$script_path"
         
         for routine in "${ordered_routines[@]}"; do
-            local routine_file=$(echo "$routine" | sed 's/[[:space:]]/_/g')
+            local routine_file
+            routine_file="${routine// /_}"
             cat >> "$script_path" << EOF
 
 # $routine routine

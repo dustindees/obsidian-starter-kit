@@ -40,6 +40,10 @@ show_installation_menu() {
         get_routine_content
         get_recurring_routine_frequencies
         get_recurring_routine_content
+        
+        # Source script_builder.sh and get routine order after templates are built
+        source "$(dirname "${BASH_SOURCE[0]}")/script_builder.sh"
+        get_routine_order
     fi
     
     ask_moc_integration
