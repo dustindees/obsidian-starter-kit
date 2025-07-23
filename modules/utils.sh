@@ -132,4 +132,16 @@ create_base_directories() {
         mkdir -p "$vault_path/$dir"
         print_success "Created: $vault_path/$dir"
     done
+    
+    # Copy default templates to 999_Templates directory
+    local templates_source="$SCRIPT_DIR/modules/templates/999_Templates"
+    if [[ -d "$templates_source" ]]; then
+        print_status "Copying default templates..."
+        cp "$templates_source"/*.md "$vault_path/999_Templates/" 2>/dev/null || true
+        local template_count
+        template_count=$(find "$vault_path/999_Templates/" -name "*.md" | wc -l)
+        if [[ $template_count -gt 0 ]]; then
+            print_success "Copied $template_count template files to 999_Templates"
+        fi
+    fi
 }
