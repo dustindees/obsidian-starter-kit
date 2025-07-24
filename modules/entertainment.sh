@@ -36,9 +36,30 @@ create_entertainment_lists() {
     print_status "Creating entertainment list files..."
     
     for category in "${entertainment_categories[@]}"; do
-        local filename=$(echo "$category" | sed 's/[[:space:]]/_/g')
+        local filename
+        filename="${category// /_}"
         local filepath="$permanent_dir/${filename}_List.md"
-        touch "$filepath"
+        
+        # Create the file with the template content
+        cat > "$filepath" << EOF
+Associated MOCs: [[0-Entertainment]]
+
+---
+
+# On Deck 
+
+
+# Ongoing
+
+
+# TODO 
+
+
+# Completed 2025
+
+
+EOF
+        
         print_success "Created: $filepath"
     done
 }
