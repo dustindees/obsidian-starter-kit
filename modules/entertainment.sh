@@ -24,7 +24,23 @@ create_entertainment_moc() {
     local filepath="$permanent_dir/0-Entertainment.md"
     
     print_status "Creating entertainment MOC file..."
-    touch "$filepath"
+    
+    # Create the dashboard with On Deck and Lists sections
+    cat > "$filepath" << 'EOF'
+# On Deck
+
+
+# Lists
+
+EOF
+
+    # Add links to each category list file
+    for category in "${entertainment_categories[@]}"; do
+        local filename
+        filename="${category// /_}"
+        echo "- [[$filename" "_List]]" >> "$filepath"
+    done
+    
     print_success "Created: $filepath"
 }
 
