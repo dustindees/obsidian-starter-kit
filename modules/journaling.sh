@@ -92,14 +92,14 @@ MONTHLY_EOF
         
         # Update the journaling MOC to include link to new monthly file
         # Check if the year section exists, if not add it
-        if ! grep -q "## \$CURRENT_YEAR" "\$JOURNALING_MOC"; then
-            # Add year section under "## Current Year"
-            sed -i "/## Current Year/a\\\\n### \$CURRENT_YEAR\\n" "\$JOURNALING_MOC"
+        if ! grep -q "# \$CURRENT_YEAR" "\$JOURNALING_MOC"; then
+            # Add year section under "# Current Year"
+            sed -i "/# Current Year/a\\\\n# \$CURRENT_YEAR\\n" "\$JOURNALING_MOC"
         fi
         
         # Add link to monthly review if it doesn't exist
         if ! grep -q "\$CURRENT_YEAR-\$CURRENT_MONTH-Review" "\$JOURNALING_MOC"; then
-            sed -i "/### \$CURRENT_YEAR/a\\- [[\$CURRENT_YEAR-\$CURRENT_MONTH-Review]]" "\$JOURNALING_MOC"
+            sed -i "/# \$CURRENT_YEAR/a\\- [[\$CURRENT_YEAR-\$CURRENT_MONTH-Review]]" "\$JOURNALING_MOC"
         fi
         
         echo "Updated journaling MOC with new monthly review link"
@@ -157,7 +157,7 @@ if [[ -d "\$ROUTINES_DIR" ]]; then
         # If we found journal content, add it to the monthly review
         if [[ -n "\$journal_content" ]]; then
             # Check if this day already has an entry in the monthly review
-            day_header="### \$filename"
+            day_header="# \$filename"
             
             if ! grep -q "^\$day_header\$" "\$monthly_review_file"; then
                 # Add the day's journal entries
@@ -197,32 +197,32 @@ create_journal_crontab_instructions() {
 
 To automatically run your journal aggregation script daily, add it to your crontab:
 
-## 1. Open crontab editor:
+# 1. Open crontab editor:
 \`\`\`bash
 crontab -e
 \`\`\`
 
-## 2. Add this line to run daily at 11:59 PM:
+# 2. Add this line to run daily at 11:59 PM:
 \`\`\`
 59 23 * * * $(pwd)/$scripts_dir/journal_aggregation.sh
 \`\`\`
 
-## 3. Alternative times:
+# 3. Alternative times:
 - Run at 9:00 PM: \`0 21 * * * $(pwd)/$scripts_dir/journal_aggregation.sh\`
 - Run at 6:00 AM: \`0 6 * * * $(pwd)/$scripts_dir/journal_aggregation.sh\`
 
-## What the script does:
+# What the script does:
 - **First of month**: Creates new monthly review file (YYYY-Month-Review.md)
 - **Daily**: Scans all daily notes for "notes:", "journal:", or "diary:" fields
 - **Daily**: Aggregates journal entries into appropriate monthly review files
 
-## Manual execution:
+# Manual execution:
 You can also run the script manually anytime:
 \`\`\`bash
 $(pwd)/$scripts_dir/journal_aggregation.sh
 \`\`\`
 
-## Notes:
+# Notes:
 - The script looks for daily note files in 900_Routines/ directory
 - Only processes files with YYYY-MM-DD.md naming format
 - Automatically updates the journaling MOC file with new monthly reviews
