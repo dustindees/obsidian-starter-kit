@@ -29,9 +29,9 @@ create_journaling_moc() {
     cat > "$filepath" << 'EOF'
 # Monthly Reviews
 
-## Current Year
+# Current Year
 
-## Previous Years
+# Previous Years
 
 EOF
     
@@ -78,14 +78,14 @@ if [[ "\$DAY_OF_MONTH" == "01" ]]; then
     
     if [[ ! -f "\$MONTHLY_FILE" ]]; then
         cat > "\$MONTHLY_FILE" << 'MONTHLY_EOF'
----
-tags: monthly-review, journal
-date: \$TODAY
+
+Associated MOCs or files: [[0-Journaling]]
+
 ---
 
 # \$CURRENT_MONTH \$CURRENT_YEAR Review
 
-## Journal Entries
+# Journal Entries
 
 MONTHLY_EOF
         echo "Created monthly review file: \$MONTHLY_FILE"
