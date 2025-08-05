@@ -126,9 +126,9 @@ echo "Building daily note for \$TODAY..."
 
 # Initialize temp file with metadata and navigation
 cat > "\$TEMP_FILE" << 'HEADER'
+
 ---
-tags: daily-note
-date: \$TODAY
+tags:
 ---
 
 # Daily Note - \$TODAY
