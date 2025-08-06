@@ -71,7 +71,7 @@ DAY_OF_MONTH=\$(date +%d)
 echo "Running journal aggregation for \$TODAY..."
 
 # Create monthly review file if it doesn't exist
-MONTHLY_FILE="\$PERMANENT_DIR/\${CURRENT_YEAR}-\${CURRENT_MONTH}-Review.md"
+MONTHLY_FILE="\$PERMANENT_DIR/\${CURRENT_YEAR}_\${CURRENT_MONTH}_Review.md"
 
 if [[ ! -f "\$MONTHLY_FILE" ]]; then
     echo "Creating monthly review file: \$MONTHLY_FILE..."
@@ -89,15 +89,9 @@ MONTHLY_EOF
     echo "Created monthly review file: \$MONTHLY_FILE"
     
     # Update the journaling MOC to include link to new monthly file
-    # Check if the year section exists, if not add it
-    if ! grep -q "# \$CURRENT_YEAR" "\$JOURNALING_MOC"; then
-        # Add year section under "# Current Year"
-        sed -i "/# Current Year/a\\\\n# \$CURRENT_YEAR\\n" "\$JOURNALING_MOC"
-    fi
-    
-    # Add link to monthly review if it doesn't exist
-    if ! grep -q "\$CURRENT_YEAR-\$CURRENT_MONTH-Review" "\$JOURNALING_MOC"; then
-        sed -i "/# \$CURRENT_YEAR/a\\- [[\$CURRENT_YEAR-\$CURRENT_MONTH-Review]]" "\$JOURNALING_MOC"
+    # Add link to monthly review under "# Current Year" if it doesn't exist
+    if ! grep -q "\$CURRENT_YEAR_\$CURRENT_MONTH_Review" "\$JOURNALING_MOC"; then
+        sed -i "/# Current Year/a\\- [[\$CURRENT_YEAR_\$CURRENT_MONTH_Review]]" "\$JOURNALING_MOC"
     fi
     
     echo "Updated journaling MOC with new monthly review link"
@@ -128,7 +122,7 @@ if [[ -d "\$ROUTINES_DIR" ]]; then
         file_month=\$(date -d "\$file_year-\$file_month_num-01" +%B)
         
         # Determine the monthly review file for this entry
-        monthly_review_file="\$PERMANENT_DIR/\${file_year}-\${file_month}-Review.md"
+        monthly_review_file="\$PERMANENT_DIR/\${file_year}_\${file_month}_Review.md"
         
         # Create monthly review file if it doesn't exist (for past months)
         if [[ ! -f "\$monthly_review_file" ]]; then
@@ -144,11 +138,16 @@ Associated MOCs or files: [[0-Journaling]]
 
 PAST_MONTHLY_EOF
             # Update MOC for past month
-            if ! grep -q "# \$file_year" "\$JOURNALING_MOC"; then
-                sed -i "/# Current Year/a\\\\n# \$file_year\\n" "\$JOURNALING_MOC"
-            fi
-            if ! grep -q "\$file_year-\$file_month-Review" "\$JOURNALING_MOC"; then
-                sed -i "/# \$file_year/a\\- [[\$file_year-\$file_month-Review]]" "\$JOURNALING_MOC"
+            if ! grep -q "\$file_year_\$file_month_Review" "\$JOURNALING_MOC"; then
+                # Determine if this is current year or previous year
+                current_year=\$(date +%Y)
+                if [[ "\$file_year" == "\$current_year" ]]; then
+                    # Add to Current Year section
+                    sed -i "/# Current Year/a\\- [[\$file_year_\$file_month_Review]]" "\$JOURNALING_MOC"
+                else
+                    # Add to Previous Years section
+                    sed -i "/# Previous Years/a\\- [[\$file_year_\$file_month_Review]]" "\$JOURNALING_MOC"
+                fi
             fi
         fi
         
