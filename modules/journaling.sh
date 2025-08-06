@@ -70,42 +70,39 @@ DAY_OF_MONTH=\$(date +%d)
 
 echo "Running journal aggregation for \$TODAY..."
 
-# Check if it's the first of the month to create new monthly review file
-if [[ "\$DAY_OF_MONTH" == "01" ]]; then
-    echo "First of the month detected - creating monthly review file..."
-    
-    MONTHLY_FILE="\$PERMANENT_DIR/\${CURRENT_YEAR}-\${CURRENT_MONTH}-Review.md"
-    
-    if [[ ! -f "\$MONTHLY_FILE" ]]; then
-        cat > "\$MONTHLY_FILE" << 'MONTHLY_EOF'
+# Create monthly review file if it doesn't exist
+MONTHLY_FILE="\$PERMANENT_DIR/\${CURRENT_YEAR}-\${CURRENT_MONTH}-Review.md"
 
-Associated MOCs or files: [[0-Journaling]]
-
+if [[ ! -f "\$MONTHLY_FILE" ]]; then
+    echo "Creating monthly review file: \$MONTHLY_FILE..."
+    
+    cat > "\$MONTHLY_FILE" << 'MONTHLY_EOF'
+---
+tags:
 ---
 
-# \$CURRENT_MONTH \$CURRENT_YEAR Review
+Associated MOCs or files: [[0-Journaling]]
 
 # Journal Entries
 
 MONTHLY_EOF
-        echo "Created monthly review file: \$MONTHLY_FILE"
-        
-        # Update the journaling MOC to include link to new monthly file
-        # Check if the year section exists, if not add it
-        if ! grep -q "# \$CURRENT_YEAR" "\$JOURNALING_MOC"; then
-            # Add year section under "# Current Year"
-            sed -i "/# Current Year/a\\\\n# \$CURRENT_YEAR\\n" "\$JOURNALING_MOC"
-        fi
-        
-        # Add link to monthly review if it doesn't exist
-        if ! grep -q "\$CURRENT_YEAR-\$CURRENT_MONTH-Review" "\$JOURNALING_MOC"; then
-            sed -i "/# \$CURRENT_YEAR/a\\- [[\$CURRENT_YEAR-\$CURRENT_MONTH-Review]]" "\$JOURNALING_MOC"
-        fi
-        
-        echo "Updated journaling MOC with new monthly review link"
-    else
-        echo "Monthly review file already exists: \$MONTHLY_FILE"
+    echo "Created monthly review file: \$MONTHLY_FILE"
+    
+    # Update the journaling MOC to include link to new monthly file
+    # Check if the year section exists, if not add it
+    if ! grep -q "# \$CURRENT_YEAR" "\$JOURNALING_MOC"; then
+        # Add year section under "# Current Year"
+        sed -i "/# Current Year/a\\\\n# \$CURRENT_YEAR\\n" "\$JOURNALING_MOC"
     fi
+    
+    # Add link to monthly review if it doesn't exist
+    if ! grep -q "\$CURRENT_YEAR-\$CURRENT_MONTH-Review" "\$JOURNALING_MOC"; then
+        sed -i "/# \$CURRENT_YEAR/a\\- [[\$CURRENT_YEAR-\$CURRENT_MONTH-Review]]" "\$JOURNALING_MOC"
+    fi
+    
+    echo "Updated journaling MOC with new monthly review link"
+else
+    echo "Monthly review file already exists: \$MONTHLY_FILE"
 fi
 
 # Process daily journal entries
@@ -133,9 +130,26 @@ if [[ -d "\$ROUTINES_DIR" ]]; then
         # Determine the monthly review file for this entry
         monthly_review_file="\$PERMANENT_DIR/\${file_year}-\${file_month}-Review.md"
         
-        # Skip if monthly review file doesn't exist yet
+        # Create monthly review file if it doesn't exist (for past months)
         if [[ ! -f "\$monthly_review_file" ]]; then
-            continue
+            echo "Creating past monthly review file: \$monthly_review_file..."
+            cat > "\$monthly_review_file" << 'PAST_MONTHLY_EOF'
+---
+tags:
+---
+
+Associated MOCs or files: [[0-Journaling]]
+
+# Journal Entries
+
+PAST_MONTHLY_EOF
+            # Update MOC for past month
+            if ! grep -q "# \$file_year" "\$JOURNALING_MOC"; then
+                sed -i "/# Current Year/a\\\\n# \$file_year\\n" "\$JOURNALING_MOC"
+            fi
+            if ! grep -q "\$file_year-\$file_month-Review" "\$JOURNALING_MOC"; then
+                sed -i "/# \$file_year/a\\- [[\$file_year-\$file_month-Review]]" "\$JOURNALING_MOC"
+            fi
         fi
         
         # Extract journal content from daily file

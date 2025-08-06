@@ -125,13 +125,10 @@ mkdir -p "\$DAILY_NOTES_DIR"
 echo "Building daily note for \$TODAY..."
 
 # Initialize temp file with metadata and navigation
-cat > "\$TEMP_FILE" << 'HEADER'
-
+cat > "\$TEMP_FILE" << HEADER
 ---
 tags:
 ---
-
-# Daily Note - \$TODAY
 
 <button type='button' id='render'>[[\$YESTERDAY | Yesterday]]</button>
 <button type='button' id='render'>[[\$TOMORROW | Tomorrow]]</button>
@@ -166,9 +163,15 @@ EOF
     if [[ ${#recurring_routine_frequencies[@]} -gt 0 ]]; then
         cat >> "$script_path" << 'EOF'
 
-# Add recurring tasks based on frequency
+# Add recurring tasks section
 echo "" >> "$TEMP_FILE"
 echo "# Recurring Tasks" >> "$TEMP_FILE"
+
+# Always include daily recurring tasks
+if [[ -f "$AUTOMATION_DIR/Recurring_Tasks_Daily.md" ]]; then
+    # Skip the header line from Daily file since we added our own above
+    tail -n +2 "$AUTOMATION_DIR/Recurring_Tasks_Daily.md" >> "$TEMP_FILE"
+fi
 
 EOF
         
