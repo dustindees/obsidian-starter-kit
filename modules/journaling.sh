@@ -29,9 +29,7 @@ create_journaling_moc() {
     cat > "$filepath" << 'EOF'
 # Monthly Reviews
 
-# Current Year
-
-# Previous Years
+# Annual Reviews
 
 EOF
     
@@ -89,9 +87,9 @@ MONTHLY_EOF
     echo "Created monthly review file: \$MONTHLY_FILE"
     
     # Update the journaling MOC to include link to new monthly file
-    # Add link to monthly review under "# Current Year" if it doesn't exist
+    # Add link to monthly review under "# Monthly Reviews" if it doesn't exist
     if ! grep -q "\$CURRENT_YEAR_\$CURRENT_MONTH_Review" "\$JOURNALING_MOC"; then
-        sed -i "/# Current Year/a\\- [[\$CURRENT_YEAR_\$CURRENT_MONTH_Review]]" "\$JOURNALING_MOC"
+        sed -i "/# Monthly Reviews/a\\- [[\$CURRENT_YEAR_\$CURRENT_MONTH_Review]]" "\$JOURNALING_MOC"
     fi
     
     echo "Updated journaling MOC with new monthly review link"
@@ -139,46 +137,38 @@ Associated MOCs or files: [[0-Journaling]]
 PAST_MONTHLY_EOF
             # Update MOC for past month
             if ! grep -q "\$file_year_\$file_month_Review" "\$JOURNALING_MOC"; then
-                # Determine if this is current year or previous year
-                current_year=\$(date +%Y)
-                if [[ "\$file_year" == "\$current_year" ]]; then
-                    # Add to Current Year section
-                    sed -i "/# Current Year/a\\- [[\$file_year_\$file_month_Review]]" "\$JOURNALING_MOC"
-                else
-                    # Add to Previous Years section
-                    sed -i "/# Previous Years/a\\- [[\$file_year_\$file_month_Review]]" "\$JOURNALING_MOC"
-                fi
+                # Add to Monthly Reviews section
+                sed -i "/# Monthly Reviews/a\\- [[\$file_year_\$file_month_Review]]" "\$JOURNALING_MOC"
             fi
         fi
         
         # Extract journal content from daily file
-        journal_content=""
+        # Check if this day already has an entry in the monthly review
+        day_header="## \$filename"
         
-        # Look for lines containing "notes:", "journal:", or "diary:"
-        while IFS= read -r line; do
-            if [[ \$line =~ ^[[:space:]]*([Nn]otes|[Jj]ournal|[Dd]iary):[[:space:]]*(.+)\$ ]]; then
-                field_content="\${BASH_REMATCH[2]}"
-                if [[ -n "\$field_content" ]]; then
-                    if [[ -n "\$journal_content" ]]; then
-                        journal_content="\$journal_content\\n"
-                    fi
-                    journal_content="\$journal_content- \$field_content"
-                fi
-            fi
-        done < "\$daily_file"
-        
-        # If we found journal content, add it to the monthly review
-        if [[ -n "\$journal_content" ]]; then
-            # Check if this day already has an entry in the monthly review
-            day_header="# \$filename"
+        if ! grep -q "^\$day_header\$" "\$monthly_review_file"; then
+            # Check for journal entries in this daily file
+            journal_entries_found=false
             
-            if ! grep -q "^\$day_header\$" "\$monthly_review_file"; then
-                # Add the day's journal entries
-                echo "" >> "\$monthly_review_file"
-                echo "\$day_header" >> "\$monthly_review_file"
-                echo "" >> "\$monthly_review_file"
-                echo -e "\$journal_content" >> "\$monthly_review_file"
-                
+            # Look for lines containing journal entries in format "Category Notes:"
+            while IFS= read -r line; do
+                if [[ \$line =~ ^[[:space:]]*.*[[:space:]]+(Notes|notes):[[:space:]]*(.+)\$ ]]; then
+                    field_content="\${BASH_REMATCH[2]}"
+                    if [[ -n "\$field_content" ]]; then
+                        # Add day header if this is the first entry found for this day
+                        if [[ "\$journal_entries_found" == "false" ]]; then
+                            echo "" >> "\$monthly_review_file"
+                            echo "\$day_header" >> "\$monthly_review_file"
+                            echo "" >> "\$monthly_review_file"
+                            journal_entries_found=true
+                        fi
+                        # Add the journal entry line
+                        echo "- \$line" >> "\$monthly_review_file"
+                    fi
+                fi
+            done < "\$daily_file"
+            
+            if [[ "\$journal_entries_found" == "true" ]]; then
                 echo "Added journal entries for \$filename to \$monthly_review_file"
             fi
         fi
