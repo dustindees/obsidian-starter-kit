@@ -108,7 +108,7 @@ EOF
 VAULT_PATH="$vault_path"
 VAULT_NAME="$vault_name"
 AUTOMATION_DIR="\$VAULT_PATH/997_Automation"
-DAILY_NOTES_DIR="\$VAULT_PATH/900_Routines/Daily_Notes"
+DAILY_NOTES_DIR="\$VAULT_PATH/900_Routines"
 TEMP_FILE="/tmp/daily_note_builder.md"
 
 # Date variables
@@ -130,8 +130,7 @@ cat > "\$TEMP_FILE" << HEADER
 tags:
 ---
 
-<button type='button' id='render'>[[\$YESTERDAY | Yesterday]]</button>
-<button type='button' id='render'>[[\$TOMORROW | Tomorrow]]</button>
+<button type='button' id='render'>[[\$YESTERDAY | Yesterday]]</button><button type='button' id='render'>[[\$TOMORROW | Tomorrow]]</button>
 
 HEADER
 
