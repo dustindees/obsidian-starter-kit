@@ -88,8 +88,8 @@ MONTHLY_EOF
     
     # Update the journaling MOC to include link to new monthly file
     # Add link to monthly review under "# Monthly Reviews" if it doesn't exist
-    if ! grep -q "\$CURRENT_YEAR_\$CURRENT_MONTH_Review" "\$JOURNALING_MOC"; then
-        sed -i "/# Monthly Reviews/a\\- [[\$CURRENT_YEAR_\$CURRENT_MONTH_Review]]" "\$JOURNALING_MOC"
+    if ! grep -q "\${CURRENT_YEAR}_\${CURRENT_MONTH}_Review" "\$JOURNALING_MOC"; then
+        sed -i "/# Monthly Reviews/a\\- [[\${CURRENT_YEAR}_\${CURRENT_MONTH}_Review]]" "\$JOURNALING_MOC"
     fi
     
     echo "Updated journaling MOC with new monthly review link"
@@ -136,9 +136,9 @@ Associated MOCs or files: [[0-Journaling]]
 
 PAST_MONTHLY_EOF
             # Update MOC for past month
-            if ! grep -q "\$file_year_\$file_month_Review" "\$JOURNALING_MOC"; then
+            if ! grep -q "\${file_year}_\${file_month}_Review" "\$JOURNALING_MOC"; then
                 # Add to Monthly Reviews section
-                sed -i "/# Monthly Reviews/a\\- [[\$file_year_\$file_month_Review]]" "\$JOURNALING_MOC"
+                sed -i "/# Monthly Reviews/a\\- [[\${file_year}_\${file_month}_Review]]" "\$JOURNALING_MOC"
             fi
         fi
         
@@ -150,11 +150,14 @@ PAST_MONTHLY_EOF
             # Check for journal entries in this daily file
             journal_entries_found=false
             
-            # Look for lines containing journal entries in format "Category Notes:"
+            # Look for lines containing journal entries in format "Category notes/diary/journal:"
             while IFS= read -r line; do
-                if [[ \$line =~ ^[[:space:]]*.*[[:space:]]+(Notes|notes):[[:space:]]*(.+)\$ ]]; then
+                # Case insensitive matching for notes, diary, or journal fields
+                if [[ \$line =~ ^[[:space:]]*.*[[:space:]]+([Nn]otes|[Dd]iary|[Jj]ournal):[[:space:]]*(.+)\$ ]]; then
                     field_content="\${BASH_REMATCH[2]}"
-                    if [[ -n "\$field_content" ]]; then
+                    # Only add if field content is not empty (trim whitespace first)
+                    field_content_trimmed=\$(echo "\$field_content" | xargs)
+                    if [[ -n "\$field_content_trimmed" ]]; then
                         # Add day header if this is the first entry found for this day
                         if [[ "\$journal_entries_found" == "false" ]]; then
                             echo "" >> "\$monthly_review_file"
